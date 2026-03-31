@@ -1,0 +1,137 @@
+-- 1. LIMPEZA E CRIAÇÃO DO BANCO
+DROP DATABASE IF EXISTS sistema_adequacao_etc;
+CREATE DATABASE sistema_adequacao_etc CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE sistema_adequacao_etc;
+
+-- 2. ESTRUTURA RBAC (FIEL À IMAGEM DO MODELO DE DADOS)
+
+CREATE TABLE usuario (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(180) NOT NULL UNIQUE,
+    senha_hash VARCHAR(255) NOT NULL,
+    ativo TINYINT(1) DEFAULT 1,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_usuario_email UNIQUE (email)
+) ENGINE=InnoDB;
+
+CREATE TABLE papel (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    descricao VARCHAR(255),
+    CONSTRAINT uk_papel_nome UNIQUE (nome)
+) ENGINE=InnoDB;
+
+CREATE TABLE permissao (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    descricao VARCHAR(255),
+    recurso VARCHAR(100),
+    acao VARCHAR(50),
+    CONSTRAINT uk_permissao_nome UNIQUE (nome)
+) ENGINE=InnoDB;
+
+CREATE TABLE usuario_papel (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT NOT NULL,
+    papel_id BIGINT NOT NULL,
+    data_inicio DATETIME NOT NULL,
+    data_fim DATETIME,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE,
+    FOREIGN KEY (papel_id) REFERENCES papel(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE papel_permissao (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    papel_id BIGINT NOT NULL,
+    permissao_id BIGINT NOT NULL,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (papel_id) REFERENCES papel(id) ON DELETE CASCADE,
+    FOREIGN KEY (permissao_id) REFERENCES permissao(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 3. ESTRUTURA DE NEGÓCIO (FICHA DE ADEQUAÇÃO CURRICULAR)
+
+-- Seção 1: Identificação do Estudante
+CREATE TABLE aluno (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    matricula VARCHAR(50) UNIQUE, -- Código de matrícula único
+    email VARCHAR(180), -- Email do aluno
+    nome_completo VARCHAR(150) NOT NULL,
+    foto VARCHAR(255), -- Caminho para a foto do aluno
+    data_nascimento DATE NOT NULL,
+    idade INT,
+    modalidade_ano_turma_turno VARCHAR(150), -- Ex: TI, módulo 5, turma A, NOTURNO
+    endereco TEXT,
+    telefones_responsaveis VARCHAR(100),
+    filiacao_mae VARCHAR(150),
+    filiacao_pai VARCHAR(150),
+    periodo_vigencia_adequacao VARCHAR(100), -- Ex: 12/02 a 10/07/26
+    diagnostico_detalhado TEXT, -- Texto longo (Cegueira, TEA, TDAH, etc.)
+    cid_codigos VARCHAR(50) 
+) ENGINE=InnoDB;
+
+-- Seção 2 e 3: Escolarização e Saúde
+CREATE TABLE saude_escolarizacao (
+    aluno_id BIGINT PRIMARY KEY,
+    percurso_escolarizacao TEXT, -- Item 2 da Ficha
+    atendimentos_passados TEXT,  -- Item 3.1
+    atendimentos_atuais TEXT,    -- Item 3.2
+    faz_uso_medicacao TINYINT(1) DEFAULT 0, -- Item 3.3
+    medicacao_especificacao TEXT,
+    FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Seção 4: Habilidades Biopsicossociais (Preenchido pela Sala de Recursos)
+CREATE TABLE habilidade_biopsicossocial (
+    aluno_id BIGINT PRIMARY KEY,
+    comunicacao TEXT, -- Item 4.1 (Oral, Tátil, Braille)
+    aspectos_motores TEXT, -- Item 4.2 (Marcha, Coordenação Fina)
+    vida_autonoma TEXT, -- Item 4.3 (Independência, AVDs)
+    aspectos_sociais TEXT, -- Item 4.4 (Relacionamento, Frustração)
+    FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Seção 5, 6 e 7: Adequações Organizativas Gerais (preenchido pelo AEE — vale para toda a escola)
+CREATE TABLE adequacao_organizativa (
+    aluno_id BIGINT PRIMARY KEY,
+    espaco_sala TEXT,              -- Item 5.1 (Proximidade sonora, organização móveis)
+    recursos_gerais TEXT,          -- Item 5.2 (Tecnologia Assistiva: Braille, NVDA)
+    flexibilizacao_tempo TEXT,     -- Item 5.3 (Acréscimo de 50% a 100%)
+    avaliacao_diagnostica TEXT,    -- Item 6 (Engajamento, Escuta Ativa)
+    adequacao_temporalidade_legal TEXT, -- Item 7 (Regimento Escolar Art. 201)
+    FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Seção 8 e 9: Plano Pedagógico por Disciplina (preenchido pelo Professor Regente)
+-- Cada professor lança uma adequação por disciplina para o mesmo aluno
+CREATE TABLE plano_pedagogico (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    aluno_id BIGINT NOT NULL,
+    professor_id BIGINT NOT NULL,
+    disciplina_nome VARCHAR(100),
+    etapa_ensino VARCHAR(100) DEFAULT 'Ensino Profissionalizante',
+    periodo_vigencia_semestral VARCHAR(100),
+    -- Seção 8: Plano pedagógico da disciplina
+    objetivos_aprendizagem TEXT,
+    conteudos_didaticos TEXT,
+    estrategias_pedagogicas TEXT,
+    estrategias_avaliacao TEXT,
+    -- Seção 5/6/7 específicas da disciplina (complementam as gerais do AEE)
+    adequacao_espaco TEXT,         -- Adequação de espaço específica da disciplina
+    adequacao_recursos TEXT,       -- Recursos específicos da disciplina
+    adequacao_tempo TEXT,          -- Flexibilização de tempo na disciplina
+    adequacao_avaliativa TEXT,     -- Forma de avaliação adaptada na disciplina
+    FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE,
+    FOREIGN KEY (professor_id) REFERENCES usuario(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Seção 10: Encaminhamentos e Observações
+CREATE TABLE encaminhamento_final (
+    aluno_id BIGINT PRIMARY KEY,
+    contexto_escolar TEXT,
+    contexto_familiar TEXT,
+    outros_encaminhamentos TEXT,
+    data_registro DATE,
+    FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+

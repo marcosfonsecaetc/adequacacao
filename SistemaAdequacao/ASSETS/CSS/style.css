@@ -1,0 +1,60 @@
+/* ==========================================================
+   ESTILOS GLOBAIS
+   ========================================================== */
+
+body {
+    background-color: #f8f9fa;
+}
+
+/* Ajustes para inputs mais "limpos" */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+}
+
+/* Textos justificados em todos os campos de formulário */
+textarea.form-control,
+input.form-control {
+    text-align: justify;
+}
+
+/* Textos justificados dentro de modais e tabelas de listagem */
+.modal-body td,
+.modal-body p,
+.modal-body li,
+.table td {
+    text-align: justify;
+}
+
+.btn-primary {
+    background-color: #004a99; /* Azul levemente mais sóbrio para o contexto acadêmico */
+    border: none;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* ==========================================================
+   TELA DE LOGIN
+   Centraliza verticalmente apenas na página de login,
+   usando a classe .login-page aplicada no <body> do login.php
+   ========================================================== */
+
+/* body.login-page: ativa o flex de centralização só no login */
+body.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 15px;
+}

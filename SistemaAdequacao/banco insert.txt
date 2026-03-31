@@ -1,0 +1,136 @@
+USE sistema_adequacao_etc;
+
+-- SCRIPT DE CARGA INICIAL DO BANCO
+-- Inserta dados de papéis, usuários, alunos e fichas
+
+INSERT INTO papel (nome, descricao) VALUES 
+('admin', 'Superusuário do Sistema'),
+('gestor', 'Equipe Gestora da ETC (Direção/Coordenação)'),
+('sala_recursos', 'Professoras AEE (Cláudia/Lucélia)'),
+('professor', 'Professores Regentes das Disciplinas'),
+('apoio', 'Intérpretes, Monitores e Voluntários');
+
+INSERT INTO permissao (nome, recurso, acao) VALUES 
+('ALUNO_CRIAR', 'aluno', 'inserir'),
+('ALUNO_EDITAR_BIO', 'habilidade_biopsicossocial', 'editar'),
+('PLANO_PREENCHER', 'plano_pedagogico', 'inserir'),
+('FICHA_GERAR_PDF', 'relatorio', 'visualizar');
+
+INSERT INTO usuario (email, senha_hash, ativo) VALUES 
+    ('admin@etc.edu.br',      '$2y$10$7hmkYMm17auSFzQ3AAn9tuQL0vikvrfFwH289ZaaDdDSYe./ZTliW', 1),
+    ('gestor@gmail.com',      '$2y$10$7hmkYMm17auSFzQ3AAn9tuQL0vikvrfFwH289ZaaDdDSYe./ZTliW', 1),
+    ('aee@gmail.com',         '$2y$10$7hmkYMm17auSFzQ3AAn9tuQL0vikvrfFwH289ZaaDdDSYe./ZTliW', 1),
+    ('professor@gmail.com',   '$2y$10$7hmkYMm17auSFzQ3AAn9tuQL0vikvrfFwH289ZaaDdDSYe./ZTliW', 1);
+
+INSERT INTO usuario_papel (usuario_id, papel_id, data_inicio) VALUES
+    (1, 1, NOW()),
+    (2, 2, NOW()),
+    (3, 3, NOW()),
+    (4, 4, NOW());
+
+INSERT INTO aluno (matricula, email, nome_completo, foto, data_nascimento, idade, modalidade_ano_turma_turno, endereco, telefones_responsaveis, filiacao_mae, filiacao_pai, periodo_vigencia_adequacao, diagnostico_detalhado, cid_codigos)
+VALUES 
+('MAT-001', 'joao.silva@email.com', 'João da Silva', NULL, '2008-03-15', 18,
+ 'TI - Módulo 5 - Turma A - Noturno',
+ 'Rua das Flores, 123, Ceilândia, DF',
+ '(61) 99999-0001', 'Maria da Silva', 'José da Silva',
+ '12/02/2026 a 10/07/2026',
+ 'Transtorno do Espectro Autista (TEA) nível 1 de suporte; apresenta dificuldades de interação social e sensibilidade sensorial elevada, com bom desempenho acadêmico quando em ambiente estruturado.',
+ 'F84.0'),
+
+('MAT-002', 'ana.pereira@email.com', 'Ana Pereira', NULL, '2009-07-22', 17,
+ 'Eletrotécnica - Módulo 4 - Turma B - Integral',
+ 'QS 07, Casa 04, Sobradinho, DF',
+ '(61) 99999-0002', 'Cláudia Pereira', 'Fabio Pereira',
+ '12/02/2026 a 10/07/2026',
+ 'Dislexia leve (F81.0); apresenta dificuldades na decodificação de palavras escritas, lentidão na leitura e erros ortográficos frequentes. Não apresenta comprometimento intelectual. Necessita de material adaptado, tempo estendido e estratégias de ensino multissensoriais.',
+ 'F81.0');
+
+-- -------------------------------------------------------
+-- SAÚDE E ESCOLARIZAÇÃO
+-- -------------------------------------------------------
+INSERT INTO saude_escolarizacao (aluno_id, percurso_escolarizacao, atendimentos_passados, atendimentos_atuais, faz_uso_medicacao, medicacao_especificacao)
+VALUES 
+(1,
+ 'Cursou o Ensino Fundamental em escola pública regular com apoio de sala de recursos a partir do 6º ano. Repetiu o 7º ano. Ingressou no curso Técnico em TI em 2024.',
+ 'Acompanhamento fonoaudiológico (2021–2022) e terapia ocupacional (2022–2023).',
+ 'Acompanhamento psicopedagógico semanal no CAPS Infantil de Ceilândia.',
+ 0, NULL),
+
+(2,
+ 'Cursou o Ensino Fundamental em escola pública regular. Diagnóstico de dislexia confirmado em 2023 por neuropsicóloga. Ingressou no curso Técnico em Eletrotécnica em 2025 sem histórico de reprovação.',
+ 'Avaliação neuropsicológica em 2023. Acompanhamento psicopedagógico entre 2023 e 2024.',
+ 'Acompanhamento psicopedagógico quinzenal com profissional particular. Sem atendimento clínico ativo no momento.',
+ 0, NULL);
+
+-- -------------------------------------------------------
+-- HABILIDADES BIOPSICOSSOCIAIS
+-- -------------------------------------------------------
+INSERT INTO habilidade_biopsicossocial (aluno_id, comunicacao, aspectos_motores, vida_autonoma, aspectos_sociais)
+VALUES 
+(1,
+ 'Comunicação oral funcional, porém com dificuldade em manter contato visual e interpretar linguagem não verbal. Faz uso de comunicação direta e objetiva. Beneficia-se de instruções visuais e rotinas previsíveis.',
+ 'Coordenação motora fina com leve comprometimento, observado na escrita manual. Marcha e coordenação grossa dentro da normalidade.',
+ 'Apresenta autonomia nas atividades de vida diária com supervisão pontual. Necessita de apoio para organização de agenda e materiais escolares.',
+ 'Relaciona-se melhor em grupos pequenos. Demonstra dificuldade em situações de mudança de rotina e ambientes com alto estímulo sensorial. Não apresenta comportamentos agressivos.'),
+
+(2,
+ 'Comunicação oral clara e fluente. Leitura em voz alta lenta e com hesitações frequentes. Escrita com trocas ortográficas típicas da dislexia (b/d, p/q). Compreensão oral preservada.',
+ 'Aspectos motores dentro da normalidade. Escrita manual legível, porém lenta. Sem comprometimento de marcha ou coordenação.',
+ 'Plenamente autônoma nas atividades de vida diária. Organiza seus materiais e rotina escolar de forma independente.',
+ 'Boa adaptação ao grupo de colegas. Demonstra frustração em situações de leitura em voz alta perante a turma. Apresenta boa resiliência quando orientada adequadamente pelo professor.');
+
+-- -------------------------------------------------------
+-- ADEQUAÇÃO ORGANIZATIVA
+-- -------------------------------------------------------
+INSERT INTO adequacao_organizativa (aluno_id, espaco_sala, recursos_gerais, flexibilizacao_tempo, avaliacao_diagnostica, adequacao_temporalidade_legal)
+VALUES 
+(1,
+ 'Carteira posicionada próxima ao professor, longe de janelas e fontes de ruído. Organização da sala com corredores livres. Uso de fones de ouvido com cancelamento de ruído permitido durante atividades individuais.',
+ 'Uso de lupa eletrônica, software leitor de tela (NVDA), material impresso em fonte ampliada (Arial 14). Acesso a computador com teclado adaptado.',
+ 'Acréscimo de 50% do tempo em avaliações escritas. Possibilidade de realizar provas em sala separada com fiscal de apoio.',
+ 'Avaliação formativa bimestral com foco em engajamento, participação oral e portfólio de atividades. Escuta ativa valorizada como critério avaliativo.',
+ 'Adequações conforme Art. 201 do Regimento Escolar da ETC e Resolução CNE/CEB nº 4/2009. Registro em ata de reunião pedagógica de 10/02/2026.'),
+
+(2,
+ 'Carteira posicionada na fileira frontal, com boa visibilidade do quadro. Ambiente organizado e sem excesso de estímulos visuais nas paredes próximas à estudante.',
+ 'Guia de leitura (régua de leitura) para acompanhamento de texto. Material impresso em fonte Arial 14, espaçamento 1,5. Uso de gravador de voz permitido durante aulas expositivas. Acesso a dicionário durante avaliações.',
+ 'Acréscimo de 25% do tempo em avaliações escritas. Possibilidade de leitura do enunciado pelo professor em caso de dúvida.',
+ 'Avaliação contínua com ênfase na compreensão oral e resolução prática de problemas. Erros ortográficos não penalizados em disciplinas não linguísticas. Avaliação diagnóstica inicial no início de cada bimestre.',
+ 'Adequações conforme Art. 201 do Regimento Escolar da ETC e Nota Técnica MEC/SECADI nº 04/2014. Registro em ata de reunião pedagógica de 10/02/2026.');
+
+-- -------------------------------------------------------
+-- PLANO PEDAGÓGICO
+-- -------------------------------------------------------
+INSERT INTO plano_pedagogico (aluno_id, professor_id, disciplina_nome, etapa_ensino, periodo_vigencia_semestral, objetivos_aprendizagem, conteudos_didaticos, estrategias_pedagogicas, estrategias_avaliacao)
+VALUES 
+(1, 4, 'Português', 'Ensino Profissionalizante',
+ '1º Semestre (12/02 a 10/07/2026)',
+ 'Desenvolver a interpretação de textos técnicos e a produção escrita coerente com apoio de recursos visuais.',
+ 'Leitura e interpretação de manuais técnicos; produção de relatórios simples; ortografia funcional.',
+ 'Leitura compartilhada com suporte visual; uso de mapas mentais; atividades com recursos audiovisuais; instruções passo a passo.',
+ 'Avaliação qualitativa com portfólio; exercícios práticos orais e escritos; participação em discussões; menção APTO/NÃO APTO.'),
+
+(2, 4, 'Língua Portuguesa', 'Ensino Profissionalizante',
+ '1º Semestre (12/02 a 10/07/2026)',
+ 'Ampliar a fluência leitora, a compreensão textual e a produção escrita com autonomia progressiva.',
+ 'Leitura de textos de diferentes gêneros; produção textual orientada; ortografia e gramática contextualizada.',
+ 'Leitura silenciosa com guia de leitura; atividades de escuta ativa; uso de gravação de voz para produção oral antes da escrita; feedback individualizado e sem exposição perante a turma.',
+ 'Avaliação oral e escrita com tempo estendido; erros ortográficos não penalizados; portfólio de produções; menção APTO/NÃO APTO.');
+
+-- -------------------------------------------------------
+-- ENCAMINHAMENTOS FINAIS
+-- -------------------------------------------------------
+INSERT INTO encaminhamento_final (aluno_id, contexto_escolar, contexto_familiar, outros_encaminhamentos, data_registro)
+VALUES 
+(1,
+ 'Estudante integrado na sala regular com apoio da sala de recursos. Professores orientados sobre estratégias de inclusão. Acompanhamento bimestral pela equipe AEE.',
+ 'Família engajada e presente. Contato mantido via reunião quinzenal com a mãe. Responsáveis cientes do plano de adequação e das estratégias adotadas.',
+ 'Encaminhar para avaliação psicológica para monitoramento emocional. Verificar possibilidade de apoio de monitor em sala.',
+ '2026-02-25'),
+
+(2,
+ 'Estudante frequente e participativa. Professores orientados sobre a dislexia e as adequações necessárias. Sem ocorrências disciplinares. Desempenho satisfatório nas disciplinas práticas.',
+ 'Família orientada sobre estratégias de suporte à leitura em casa. Mãe relata que a estudante realiza leitura com apoio em casa. Responsáveis cientes do plano de adequação.',
+ 'Recomendar continuidade do acompanhamento psicopedagógico. Sugerir uso de aplicativos de leitura assistida (ex: NaturalReader) fora do ambiente escolar.',
+ '2026-02-25');
