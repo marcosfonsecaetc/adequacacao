@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="ASSETS/CSS/style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
 
 <div class="login-container">
     <?php if (isset($_GET['success'])):
@@ -80,7 +80,7 @@
 
                 <div class="mb-3">
                     <label for="papel_id" class="form-label">Perfil de Acesso</label>
-                    <select name="papel_id" id="papel_id" class="form-control" required>
+                    <select name="papel_id" id="papel_id" class="form-select" required>
                         <option value="" selected disabled>Selecione seu cargo...</option>
                         <option value="1">Admin</option>
                         <option value="2">Gestão Escolar</option>

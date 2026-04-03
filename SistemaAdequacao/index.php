@@ -141,6 +141,280 @@ switch ($action) {
         header('Location: index.php?action=listar_alunos');
         exit;
 
+    case 'perfil_pdf_turma':
+        $turma = trim($_GET['turma'] ?? '');
+        if (!$turma) { header('Location: index.php?action=perfil_estudante'); exit; }
+        $stmtT = $pdo->prepare("SELECT a.*, pe.vida_pessoal, pe.acompanhamento_medico FROM aluno a LEFT JOIN perfil_estudante pe ON pe.aluno_id = a.id WHERE a.modalidade_ano_turma_turno = :t ORDER BY a.nome_completo ASC");
+        $stmtT->execute([':t' => $turma]);
+        $alunosTurma = $stmtT->fetchAll(PDO::FETCH_ASSOC);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8">';
+        echo '<title>Perfis - ' . htmlspecialchars($turma, ENT_QUOTES, 'UTF-8') . '</title>';
+        echo '<style>@page{size:A4 landscape;margin:8mm}body{margin:0}@media print{.no-print{display:none!important}.page-break{page-break-after:always}}</style>';
+        echo '</head><body>';
+        echo '<div class="no-print" style="padding:8px;background:#f8f9fa;border-bottom:1px solid #ddd;font-family:Arial,sans-serif">';
+        echo '<button onclick="window.print()" style="padding:6px 16px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>';
+        echo '<span style="margin-left:12px;font-size:12px;color:#555">' . htmlspecialchars($turma, ENT_QUOTES, 'UTF-8') . ' — ' . count($alunosTurma) . ' aluno(s)</span>';
+        echo '</div>';
+        foreach ($alunosTurma as $idx => $alunoItem) {
+            $aluno = $alunoItem;
+            $p     = $alunoItem;
+            $isLast = ($idx === count($alunosTurma) - 1);
+            echo $isLast ? '<div>' : '<div class="page-break">';
+            require BASE_PATH . 'VIEW/Home/perfil_ficha_perfil.php';
+            echo '</div>';
+        }
+        echo '<script>window.onload=function(){window.print();}</script>';
+        echo '</body></html>';
+        exit;
+
+    case 'perfil_pdf_perfil':
+        $id = (int)($_GET['aluno_id'] ?? 0);
+        if (!$id) { header('Location: index.php?action=perfil_estudante'); exit; }
+        $alunoDAO = new AlunoDAO($pdo);
+        $aluno    = $alunoDAO->buscarPorId($id);
+        $stmtP    = $pdo->prepare("SELECT * FROM perfil_estudante WHERE aluno_id = :id");
+        $stmtP->execute([':id' => $id]);
+        $p = $stmtP->fetch(PDO::FETCH_ASSOC) ?: [];
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8">';
+        echo '<title>Perfil do Estudante - ' . htmlspecialchars($aluno['nome_completo'] ?? '', ENT_QUOTES, 'UTF-8') . '</title>';
+        echo '<style>@page{size:A4 landscape;margin:8mm}body{margin:0}@media print{.no-print{display:none!important}}</style>';
+        echo '</head><body>';
+        echo '<div class="no-print" style="padding:8px;background:#f8f9fa;border-bottom:1px solid #ddd;font-family:Arial,sans-serif">';
+        echo '<button onclick="window.print()" style="padding:6px 16px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>';
+        echo '<span style="margin-left:12px;font-size:12px;color:#555">Use &ldquo;Salvar como PDF&rdquo; na impressora.</span>';
+        echo '</div>';
+        require BASE_PATH . 'VIEW/Home/perfil_ficha_perfil.php';
+        echo '<script>window.onload=function(){window.print();}</script>';
+        echo '</body></html>';
+        exit;
+
+    case 'perfil_estudante':
+        safe_include(BASE_PATH . 'VIEW/Home/perfil_estudante.php');
+        break;
+
+    case 'processar_perfil_estudante':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = (int)($_POST['aluno_id'] ?? 0);
+            if (!$id) { header('Location: index.php?action=perfil_estudante'); exit; }
+            $campos = ['naturalidade','telefone_aluno','laudo_data','acompanhamento_medico','medicamento_detalhes',
+                       'ultima_escola','escola_especial','escola_especial_tempo','escolaridade_nivel',
+                       'rel_pai','rel_mae','irmaos','irmaos_rel',
+                       'onibus_sozinho','sabe_ler_escrever',
+                       'dia_a_dia','dia_a_dia_inf','escola_anterior','escola_anterior_inf',
+                       'vida_pessoal','vida_pessoal_inf','opiniao_escola','opiniao_escola_inf',
+                       'experiencia_trabalho','experiencia_trabalho_inf','planos_futuro','planos_futuro_inf',
+                       'curso_interesse','curso_interesse_inf','relacionamento','relacionamento_inf',
+                       'outras_informacoes','outras_informacoes_inf','data_registro'];
+            $bins = ['laudo_atualizado','usa_medicamento','independencia_avd','independencia_locomocao','auxilio_governo',
+                     'doc_rg','doc_cpf','doc_ctps','doc_titulo','doc_reservista','doc_sus',
+                     'detectar_fluidez','detectar_encadeamento','detectar_independencia',
+                     'detectar_introversao','detectar_extroversao','detectar_projeto_vida'];
+            $sets = implode(', ', array_map(fn($c) => "$c = :$c", array_merge($campos, $bins)));
+            $vals = [':aluno_id' => $id];
+            foreach ($campos as $c) $vals[":$c"] = trim($_POST[$c] ?? '');
+            foreach ($bins  as $c) $vals[":$c"] = isset($_POST[$c]) ? 1 : 0;
+            $cols = implode(', ', array_merge(['aluno_id'], $campos, $bins));
+            $phs  = implode(', ', array_map(fn($c) => ":$c", array_merge(['aluno_id'], $campos, $bins)));
+            $pdo->prepare("INSERT INTO perfil_estudante ($cols) VALUES ($phs) ON DUPLICATE KEY UPDATE $sets")->execute($vals);
+            $_SESSION['flash_success'] = 'Perfil do estudante salvo com sucesso!';
+            header('Location: index.php?action=perfil_estudante&aluno_id=' . $id); exit;
+        }
+        header('Location: index.php?action=perfil_estudante'); exit;
+
+    case 'perfil_pdf':
+        $id = (int)($_GET['aluno_id'] ?? 0);
+        if (!$id) { header('Location: index.php?action=perfil_estudante'); exit; }
+        $alunoDAO = new AlunoDAO($pdo);
+        $aluno    = $alunoDAO->buscarPorId($id);
+        $stmtP    = $pdo->prepare("SELECT * FROM perfil_estudante WHERE aluno_id = :id");
+        $stmtP->execute([':id' => $id]);
+        $p = $stmtP->fetch(PDO::FETCH_ASSOC) ?: [];
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8">';
+        echo '<title>Perfil - ' . htmlspecialchars($aluno['nome_completo'] ?? '', ENT_QUOTES, 'UTF-8') . '</title>';
+        echo '<style>@page{size:A4 portrait;margin:10mm}body{margin:0}@media print{.no-print{display:none!important}}</style>';
+        echo '</head><body>';
+        echo '<div class="no-print" style="padding:8px;background:#f8f9fa;border-bottom:1px solid #ddd;font-family:Arial,sans-serif">';
+        echo '<button onclick="window.print()" style="padding:6px 16px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>';
+        echo '</div>';
+        require BASE_PATH . 'VIEW/Home/perfil_ficha.php';
+        echo '<script>window.onload=function(){window.print();}</script>';
+        echo '</body></html>';
+        exit;
+
+    case 'paee':
+        safe_include(BASE_PATH . 'VIEW/Home/paee.php');
+        break;
+
+    case 'processar_paee':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = (int)($_POST['aluno_id'] ?? 0);
+            if (!$id) { header('Location: index.php?action=paee'); exit; }
+            $campos = ['modalidade','professoras_aee','professores_regentes','perfil_estudante',
+                       'ling_habilidades','ling_dificuldades','psicomotor_habilidades','psicomotor_dificuldades',
+                       'cognitivo_habilidades','cognitivo_dificuldades','social_habilidades','social_dificuldades',
+                       'familiar_habilidades','familiar_dificuldades','acessibilidade','objetivos',
+                       'frequencia','tempo_atendimento','composicao_outros',
+                       'atividades_pedagogicas','profissionais_envolvidos','avaliacao_resultados',
+                       'encaminhamentos','data_registro'];
+            $sets  = implode(', ', array_map(fn($c) => "$c = :$c", $campos));
+            $vals  = array_combine(array_map(fn($c) => ":$c", $campos), array_map(fn($c) => trim($_POST[$c] ?? ''), $campos));
+            $vals[':aluno_id']            = $id;
+            $vals[':composicao_individual'] = isset($_POST['composicao_individual']) ? 1 : 0;
+            $vals[':composicao_grupo']      = isset($_POST['composicao_grupo'])      ? 1 : 0;
+            $pdo->prepare("INSERT INTO paee (aluno_id, composicao_individual, composicao_grupo, $sets)
+                VALUES (:aluno_id, :composicao_individual, :composicao_grupo, " .
+                implode(', ', array_map(fn($c) => ":$c", $campos)) . ")
+                ON DUPLICATE KEY UPDATE composicao_individual=VALUES(composicao_individual),
+                composicao_grupo=VALUES(composicao_grupo), $sets")->execute($vals);
+            $_SESSION['flash_success'] = 'PAEE salvo com sucesso!';
+            header('Location: index.php?action=paee&aluno_id=' . $id); exit;
+        }
+        header('Location: index.php?action=paee'); exit;
+
+    case 'paee_pdf':
+        $id = (int)($_GET['aluno_id'] ?? 0);
+        if (!$id) { header('Location: index.php?action=paee'); exit; }
+        $alunoDAO = new AlunoDAO($pdo);
+        $aluno    = $alunoDAO->buscarPorId($id);
+        if (!$aluno) { header('Location: index.php?action=paee'); exit; }
+        $stmtP = $pdo->prepare("SELECT * FROM paee WHERE aluno_id = :id");
+        $stmtP->execute([':id' => $id]);
+        $paee = $stmtP->fetch(PDO::FETCH_ASSOC) ?: [];
+        $nome = htmlspecialchars($aluno['nome_completo'] ?? 'PAEE', ENT_QUOTES, 'UTF-8');
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8">';
+        echo '<title>PAEE - ' . $nome . '</title>';
+        echo '<style>@page{size:A4 portrait;margin:10mm}body{margin:0}@media print{.no-print{display:none!important}}</style>';
+        echo '</head><body>';
+        echo '<div class="no-print" style="padding:8px;background:#f8f9fa;border-bottom:1px solid #ddd;font-family:Arial,sans-serif">';
+        echo '<button onclick="window.print()" style="padding:6px 16px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>';
+        echo '<span style="margin-left:12px;font-size:12px;color:#555">Use &ldquo;Salvar como PDF&rdquo; na impressora.</span>';
+        echo '</div>';
+        require BASE_PATH . 'VIEW/Home/paee_ficha.php';
+        echo '<script>window.onload=function(){window.print();}</script>';
+        echo '</body></html>';
+        exit;
+
+    case 'vincular_professores':
+        safe_include(BASE_PATH . 'VIEW/Home/vincular_professores.php');
+        break;
+
+    case 'processar_vincular_professor':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $alunoId    = (int)($_POST['aluno_id']    ?? 0);
+            $professorId = (int)($_POST['professor_id'] ?? 0);
+            $disciplina  = trim($_POST['disciplina'] ?? '');
+            if ($alunoId && $professorId) {
+                try {
+                    $pdo->prepare("INSERT IGNORE INTO aluno_professor (aluno_id, professor_id, disciplina) VALUES (:a, :p, :d)")
+                        ->execute([':a' => $alunoId, ':p' => $professorId, ':d' => $disciplina]);
+                    $_SESSION['flash_success'] = 'Professor vinculado com sucesso!';
+                } catch (Exception $e) {
+                    $_SESSION['flash_error'] = 'Erro ao vincular professor.';
+                }
+            }
+            header('Location: index.php?action=vincular_professores&aluno_id=' . $alunoId); exit;
+        }
+        header('Location: index.php?action=vincular_professores'); exit;
+
+    case 'remover_vinculo':
+        $id      = (int)($_GET['id']       ?? 0);
+        $alunoId = (int)($_GET['aluno_id'] ?? 0);
+        if ($id) {
+            $pdo->prepare("DELETE FROM aluno_professor WHERE id = :id")->execute([':id' => $id]);
+            $_SESSION['flash_success'] = 'Vínculo removido.';
+        }
+        header('Location: index.php?action=vincular_professores&aluno_id=' . $alunoId); exit;
+
+    case 'relatorios':
+        safe_include(BASE_PATH . 'VIEW/Home/relatorios.php');
+        break;
+
+    case 'cadastrar_colaborador':
+        safe_include(BASE_PATH . 'VIEW/Home/cadastrar_colaborador.php');
+        break;
+
+    case 'processar_cadastrar_colaborador':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email       = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            $senha       = $_POST['senha']        ?? '';
+            $confirmSenha = $_POST['confirm_senha'] ?? '';
+            $papelId     = (int)($_POST['papel_id'] ?? 0);
+            $nome        = trim($_POST['nome_completo'] ?? '');
+
+            if (!$email || !$senha || !$papelId || !$nome) {
+                $_SESSION['flash_error'] = 'Preencha todos os campos obrigatórios.';
+                header('Location: index.php?action=cadastrar_colaborador'); exit;
+            }
+            if ($senha !== $confirmSenha) {
+                $_SESSION['flash_error'] = 'As senhas não coincidem.';
+                header('Location: index.php?action=cadastrar_colaborador'); exit;
+            }
+            if (strlen($senha) < 6) {
+                $_SESSION['flash_error'] = 'A senha deve ter no mínimo 6 caracteres.';
+                header('Location: index.php?action=cadastrar_colaborador'); exit;
+            }
+            $dto = new UsuarioDTO($email, $senha, $papelId, $nome, null, trim($_POST['matricula_servidor'] ?? ''));
+            $usuarioDAO = new UsuarioDAO($pdo);
+            if ($usuarioDAO->cadastrar($dto)) {
+                $_SESSION['flash_success'] = 'Colaborador cadastrado com sucesso!';
+                header('Location: index.php?action=listar_colaboradores');
+            } else {
+                $_SESSION['flash_error'] = 'Erro ao cadastrar. E-mail já pode estar em uso.';
+                header('Location: index.php?action=cadastrar_colaborador');
+            }
+            exit;
+        }
+        header('Location: index.php?action=cadastrar_colaborador'); exit;
+
+    case 'listar_colaboradores':
+        safe_include(BASE_PATH . 'VIEW/Home/listar_colaboradores.php');
+        break;
+
+    case 'editar_colaborador':
+        $id = (int)($_GET['id'] ?? 0);
+        if (!$id) { header('Location: index.php?action=listar_colaboradores'); exit; }
+        $usuarioDAO  = new UsuarioDAO($pdo);
+        $colaborador = $usuarioDAO->buscarPorId($id);
+        if (!$colaborador) { header('Location: index.php?action=listar_colaboradores'); exit; }
+        require BASE_PATH . 'VIEW/Home/editar_colaborador.php';
+        break;
+
+    case 'processar_editar_colaborador':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id      = (int)($_POST['id'] ?? 0);
+            $email   = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            $papelId = (int)($_POST['papel_id'] ?? 0);
+            $senha   = $_POST['senha']         ?? '';
+            $confirm = $_POST['confirm_senha'] ?? '';
+
+            if (!$id || !$email || !$papelId) {
+                $_SESSION['flash_error'] = 'Dados inválidos.';
+                header('Location: index.php?action=listar_colaboradores'); exit;
+            }
+            if ($senha && $senha !== $confirm) {
+                $_SESSION['flash_error'] = 'As senhas não coincidem.';
+                header('Location: index.php?action=editar_colaborador&id=' . $id); exit;
+            }
+            $usuarioDAO = new UsuarioDAO($pdo);
+            $usuarioDAO->atualizar($id, $email, $papelId, $senha ?: null, trim($_POST['nome_completo'] ?? ''), trim($_POST['matricula_servidor'] ?? ''));
+            $_SESSION['flash_success'] = 'Colaborador atualizado com sucesso!';
+            header('Location: index.php?action=listar_colaboradores'); exit;
+        }
+        header('Location: index.php?action=listar_colaboradores'); exit;
+
+    case 'toggle_colaborador':
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id) {
+            $usuarioDAO = new UsuarioDAO($pdo);
+            $usuarioDAO->toggleAtivo($id);
+            $_SESSION['flash_success'] = 'Status do colaborador atualizado.';
+        }
+        header('Location: index.php?action=listar_colaboradores'); exit;
+
     case 'cadastrar_aluno':
         safe_include(BASE_PATH . 'VIEW/Home/cadastrar_aluno.php');
         break;

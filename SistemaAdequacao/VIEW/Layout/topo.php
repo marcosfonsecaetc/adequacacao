@@ -20,21 +20,19 @@ $logoutIcon = $logoutIcon ?? '&#x1F6AA;';
     <link rel="stylesheet" href="ASSETS/CSS/topo_rodape.css">
     <?php if (!empty($extraHead)) echo $extraHead; ?>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 <nav class="navbar <?php echo $navbarClass; ?> mb-2">
     <div class="container d-flex justify-content-between align-items-center">
         <span class="navbar-brand"><?php echo htmlspecialchars($brand, ENT_QUOTES, 'UTF-8'); ?></span>
         <div class="d-flex gap-2">
-            <!-- Botão Home (apenas ícone) -->
             <a href="index.php?action=dashboard" class="btn btn-outline-light btn-sm" title="Home">🏠</a>
-            <!-- Botão Logout (apenas ícone) -->
             <a href="index.php?action=logout" class="btn btn-outline-light btn-sm" title="Sair">
                 <span style="font-size: 0.9rem;"><?php echo $logoutIcon; ?></span>
             </a>
         </div>
     </div>
 </nav>
-<div class="container">
+<div class="container flex-grow-1">
 <?php if (!empty($_SESSION['flash_success'])): ?>
     <div class="alert alert-success">
         <?php echo htmlspecialchars($_SESSION['flash_success'], ENT_QUOTES, 'UTF-8'); ?>

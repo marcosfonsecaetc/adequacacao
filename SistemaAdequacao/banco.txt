@@ -8,6 +8,8 @@ USE sistema_adequacao_etc;
 CREATE TABLE usuario (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(180) NOT NULL UNIQUE,
+    nome_completo VARCHAR(150) NULL,
+    matricula_servidor VARCHAR(50) NULL,
     senha_hash VARCHAR(255) NOT NULL,
     ativo TINYINT(1) DEFAULT 1,
     data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -132,6 +134,38 @@ CREATE TABLE encaminhamento_final (
     contexto_familiar TEXT,
     outros_encaminhamentos TEXT,
     data_registro DATE,
+    FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- PAEE: Plano de Atendimento Educacional Especializado (preenchido pelo AEE)
+CREATE TABLE paee (
+    aluno_id BIGINT PRIMARY KEY,
+    composicao_individual TINYINT(1) DEFAULT 0,
+    composicao_grupo TINYINT(1) DEFAULT 0,
+    modalidade TEXT,
+    professoras_aee TEXT,
+    professores_regentes TEXT,
+    perfil_estudante TEXT,
+    ling_habilidades TEXT,
+    ling_dificuldades TEXT,
+    psicomotor_habilidades TEXT,
+    psicomotor_dificuldades TEXT,
+    cognitivo_habilidades TEXT,
+    cognitivo_dificuldades TEXT,
+    social_habilidades TEXT,
+    social_dificuldades TEXT,
+    familiar_habilidades TEXT,
+    familiar_dificuldades TEXT,
+    acessibilidade TEXT,
+    objetivos TEXT,
+    frequencia TEXT,
+    tempo_atendimento TEXT,
+    composicao_outros TEXT,
+    atividades_pedagogicas TEXT,
+    profissionais_envolvidos TEXT,
+    avaliacao_resultados TEXT,
+    encaminhamentos TEXT,
+    data_registro TEXT,
     FOREIGN KEY (aluno_id) REFERENCES aluno(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

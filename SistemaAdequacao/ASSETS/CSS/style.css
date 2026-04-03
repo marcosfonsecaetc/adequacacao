@@ -1,24 +1,22 @@
 /* ==========================================================
-   ESTILOS GLOBAIS
+   GLOBAL
    ========================================================== */
 
 body {
-    background-color: #f8f9fa;
+    background-color: #f4f6f9;
 }
 
-/* Ajustes para inputs mais "limpos" */
-.form-control:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: #0d6efd;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
 }
 
-/* Textos justificados em todos os campos de formulário */
 textarea.form-control,
 input.form-control {
     text-align: justify;
 }
 
-/* Textos justificados dentro de modais e tabelas de listagem */
 .modal-body td,
 .modal-body p,
 .modal-body li,
@@ -26,26 +24,47 @@ input.form-control {
     text-align: justify;
 }
 
-.btn-primary {
-    background-color: #004a99; /* Azul levemente mais sóbrio para o contexto acadêmico */
-    border: none;
-}
-
 .card {
-    border-radius: 12px;
+    border-radius: 10px;
 }
 
 .card-header {
-    border-radius: 12px 12px 0 0 !important;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Cards dos dashboards com hover */
+.card.shadow-sm {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card.shadow-sm:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13) !important;
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background-color: #004a99;
+    border-color: #004a99;
+}
+
+.btn-primary:hover {
+    background-color: #003a7a;
+    border-color: #003a7a;
+}
+
+.table th {
+    font-size: 0.85rem;
+}
+
+.table td {
+    font-size: 0.875rem;
+    vertical-align: middle;
 }
 
 /* ==========================================================
-   TELA DE LOGIN
-   Centraliza verticalmente apenas na página de login,
-   usando a classe .login-page aplicada no <body> do login.php
+   LOGIN / CADASTRO
    ========================================================== */
 
-/* body.login-page: ativa o flex de centralização só no login */
 body.login-page {
     display: flex;
     align-items: center;
@@ -55,6 +74,6 @@ body.login-page {
 
 .login-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     padding: 15px;
 }

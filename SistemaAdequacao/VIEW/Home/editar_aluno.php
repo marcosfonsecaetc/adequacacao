@@ -50,7 +50,7 @@ include __DIR__ . '/../Layout/topo.php';
             <label for="foto" class="form-label">Foto do Aluno</label>
             <?php if (!empty($aluno['foto'])): ?>
                 <div class="mb-2">
-                    <img src="<?php echo htmlspecialchars($aluno['foto'], ENT_QUOTES, 'UTF-8'); ?>" alt="Foto atual" style="max-height:80px;" class="img-thumbnail">
+                    <img src="/SistemaAdequacao/<?php echo htmlspecialchars($aluno['foto'], ENT_QUOTES, 'UTF-8'); ?>" alt="Foto atual" style="max-height:80px;" class="img-thumbnail">
                     <small class="text-muted ms-2">Foto atual — envie uma nova para substituir</small>
                 </div>
             <?php endif; ?>

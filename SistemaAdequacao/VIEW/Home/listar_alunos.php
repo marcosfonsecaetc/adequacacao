@@ -182,9 +182,20 @@ $alunos = $alunoDAO->listarTodos();
             var img = document.getElementById('ficha-foto');
             var semFoto = document.getElementById('ficha-sem-foto');
             if (aluno.foto) {
-                img.src = aluno.foto;
+                var fotoPath = aluno.foto.replace(/^\/+/, '');
+                var fotoUrl = fotoPath.match(/^https?:\/\//i)
+                    ? aluno.foto
+                    : window.location.origin + '/SistemaAdequacao/' + fotoPath;
+
+                img.src = fotoUrl;
                 img.style.display = 'block';
                 semFoto.style.display = 'none';
+
+                img.onerror = function() {
+                    img.style.display = 'none';
+                    semFoto.style.display = 'inline';
+                    console.warn('Falha ao carregar imagem do aluno:', fotoUrl);
+                };
             } else {
                 img.style.display = 'none';
                 semFoto.style.display = 'inline';

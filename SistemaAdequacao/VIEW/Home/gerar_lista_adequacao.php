@@ -162,7 +162,6 @@ $alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" onclick="imprimirFicha()">🖨️ Imprimir</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                 </div>
             </div>

@@ -263,26 +263,42 @@ $professores = array_unique(array_filter(array_column($planos ?? [], 'professor_
     <!-- ASSINATURAS -->
     <div style="border:1px solid #000; border-top:none; padding:30px 8px 10px;">
         <?php
-        // Professor(es) regente(s) do(s) plano(s)
-        $professoresRegentes = array_unique(array_filter(array_column($planos ?? [], 'professor_email')));
-        $nomeRegente = !empty($professoresRegentes) ? implode(' / ', $professoresRegentes) : '(Professor Regente não identificado)';
+        // Professores regentes vinculados ao aluno
+        $stmtVinc = $pdo->prepare("SELECT u.nome_completo, u.matricula_servidor, ap.disciplina FROM aluno_professor ap INNER JOIN usuario u ON u.id = ap.professor_id WHERE ap.aluno_id = :id ORDER BY u.nome_completo ASC");
+        $stmtVinc->execute([':id' => $aluno['id']]);
+        $profsVinculados = $stmtVinc->fetchAll(PDO::FETCH_ASSOC);
+        $nomeRegente = !empty($profsVinculados)
+            ? implode(' / ', array_map(fn($p) => ($p['nome_completo'] ?: '(sem nome)') . (!empty($p['matricula_servidor']) ? ' — Mat. '.$p['matricula_servidor'] : ''), $profsVinculados))
+            : '(Professor Regente não identificado)';
 
-        // Usuários AEE
-        $aee1 = $usuariosAEE[0] ?? '(A preencher)';
-        $aee2 = $usuariosAEE[1] ?? '(A preencher)';
+        // AEE (papel 3)
+        $stmtAEEa = $pdo->query("SELECT u.nome_completo, u.matricula_servidor FROM usuario u INNER JOIN usuario_papel up ON up.usuario_id = u.id WHERE up.papel_id = 3 AND u.ativo = 1 ORDER BY u.nome_completo ASC");
+        $aeeList  = $stmtAEEa->fetchAll(PDO::FETCH_ASSOC);
+        $aee1 = !empty($aeeList[0]) ? ($aeeList[0]['nome_completo'] ?: $usuariosAEE[0] ?? '(A preencher)') . (!empty($aeeList[0]['matricula_servidor']) ? ' — Mat. '.$aeeList[0]['matricula_servidor'] : '') : ($usuariosAEE[0] ?? '(A preencher)');
+        $aee2 = !empty($aeeList[1]) ? ($aeeList[1]['nome_completo'] ?: $usuariosAEE[1] ?? '(A preencher)') . (!empty($aeeList[1]['matricula_servidor']) ? ' — Mat. '.$aeeList[1]['matricula_servidor'] : '') : ($usuariosAEE[1] ?? '(A preencher)');
 
-        // Gestor
-        $gestor = !empty($usuariosGestor) ? implode(' / ', $usuariosGestor) : '(Equipe Gestora não identificada)';
+        // Gestor (papel 2)
+        $stmtGa  = $pdo->query("SELECT u.nome_completo, u.matricula_servidor FROM usuario u INNER JOIN usuario_papel up ON up.usuario_id = u.id WHERE up.papel_id = 2 AND u.ativo = 1 ORDER BY u.nome_completo ASC");
+        $gestList = $stmtGa->fetchAll(PDO::FETCH_ASSOC);
+        $gestor  = !empty($gestList[0]) ? ($gestList[0]['nome_completo'] ?: $usuariosGestor[0] ?? '(A preencher)') . (!empty($gestList[0]['matricula_servidor']) ? ' — Mat. '.$gestList[0]['matricula_servidor'] : '') : ($usuariosGestor[0] ?? '(A preencher)');
+
+        // Apoio (papel 8=secretário, 9=coordenador)
+        $stmtAp  = $pdo->query("SELECT u.nome_completo, u.matricula_servidor FROM usuario u INNER JOIN usuario_papel up ON up.usuario_id = u.id WHERE up.papel_id = 8 AND u.ativo = 1 ORDER BY u.nome_completo ASC");
+        $apoList  = $stmtAp->fetchAll(PDO::FETCH_ASSOC);
+        $secretario   = !empty($apoList[0]) ? ($apoList[0]['nome_completo'] ?: '(A preencher)') . (!empty($apoList[0]['matricula_servidor']) ? ' — Mat. '.$apoList[0]['matricula_servidor'] : '') : '(A preencher)';
+        $stmtCo  = $pdo->query("SELECT u.nome_completo, u.matricula_servidor FROM usuario u INNER JOIN usuario_papel up ON up.usuario_id = u.id WHERE up.papel_id = 9 AND u.ativo = 1 ORDER BY u.nome_completo ASC");
+        $coList   = $stmtCo->fetchAll(PDO::FETCH_ASSOC);
+        $coordenador  = !empty($coList[0]) ? ($coList[0]['nome_completo'] ?: '(A preencher)') . (!empty($coList[0]['matricula_servidor']) ? ' — Mat. '.$coList[0]['matricula_servidor'] : '') : '(A preencher)';
         ?>
         <div class="f-assinaturas">
-            <div class="f-assinatura"><?php echo fc($nomeRegente); ?><br>Professor Regente</div>
-            <div class="f-assinatura"><?php echo fc($aee1); ?><br>Professor (a) do AEE<br><span style="color:#0070c0">Sala de Recursos</span></div>
-            <div class="f-assinatura"><?php echo fc($aee2); ?><br>Professor (a) do AEE<br><span style="color:#0070c0">Sala de Recursos</span></div>
+            <div class="f-assinatura"><?php echo fc($nomeRegente); ?><br>Professor(es) Regente(s)</div>
+            <div class="f-assinatura"><?php echo fc($aee1); ?><br>Professor(a) do AEE<br><span style="color:#0070c0">Sala de Recursos</span></div>
+            <div class="f-assinatura"><?php echo fc($aee2); ?><br>Professor(a) do AEE<br><span style="color:#0070c0">Sala de Recursos</span></div>
         </div>
         <div class="f-assinaturas" style="margin-top:30px">
-            <div class="f-assinatura"><?php echo fc($gestor); ?><br>Membro da Equipe Gestora<br>Professores (as) Regentes</div>
-            <div class="f-assinatura">(A preencher)<br>Secretário Escolar<br>Matrícula</div>
-            <div class="f-assinatura">(A preencher)<br>Coordenador Pedagógico<br>Disciplina</div>
+            <div class="f-assinatura"><?php echo fc($gestor); ?><br>Membro da Equipe Gestora</div>
+            <div class="f-assinatura"><?php echo fc($secretario); ?><br>Secretário(a) Escolar</div>
+            <div class="f-assinatura"><?php echo fc($coordenador); ?><br>Coordenador(a) Pedagógico(a)</div>
         </div>
     </div>
 

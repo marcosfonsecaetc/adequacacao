@@ -44,7 +44,7 @@ if (!$aluno) {
                         <label class="form-label">Foto do Aluno</label>
                         <div>
                             <?php if (!empty($aluno['foto']) && file_exists(__DIR__ . '/../../' . $aluno['foto'])): ?>
-                                <img src="<?php echo htmlspecialchars($aluno['foto']); ?>" alt="Foto do aluno" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                <img src="/SistemaAdequacao/<?php echo htmlspecialchars($aluno['foto']); ?>" alt="Foto do aluno" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
                             <?php else: ?>
                                 <div class="text-muted">Nenhuma foto cadastrada</div>
                             <?php endif; ?>
